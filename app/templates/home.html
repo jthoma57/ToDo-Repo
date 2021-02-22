@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+{% block content %}
+    <input type="submit" name="submit_button" value="Add Task">
+    <br></br>
+    <div class="content-section">
+        <h4>
+            <div class="row">
+                <div class="col-sm">Task</div>
+                <div class="col-sm">Due Date</div>
+                <div class="col-sm">Status</div>
+            </div>
+        </h4>
+        {% for todo in todos %}
+            <div class="row">
+                <div class="col-sm">
+                    <input type="checkbox" name="checkbox" value="1">  
+                    {{ todo.task }}
+                </div>
+                <div class="col-sm">
+                    {{ todo.due_date }}
+                </div>
+                <div class="col-sm">
+                    {% if todo.complete == False %}
+                        <a href="#">Mark Complete</a>
+                    {% else %}
+                        <a href="#">Mark Incomplete</a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock content %}
