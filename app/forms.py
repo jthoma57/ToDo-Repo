@@ -50,6 +50,3 @@ class AddToDoForm(FlaskForm):
     task = StringField('Task', validators=[DataRequired()])
     due_date = DateField('Due Date', format='%Y-%m-%d', validators=[DataRequired()])
     submit = SubmitField('Add Task')
-
-class ManageToDoForm(FlaskForm):
-    completion = BooleanField('')

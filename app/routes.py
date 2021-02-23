@@ -1,6 +1,6 @@
-from flask import render_template, url_for, flash, redirect, request
+from flask import render_template, url_for, flash, redirect, request, abort
 from app import app, db, bcrypt, mail
-from app.forms import RegistrationForm, LoginForm, RequestResetForm, ResetPasswordForm, AddToDoForm, ManageToDoForm
+from app.forms import RegistrationForm, LoginForm, RequestResetForm, ResetPasswordForm, AddToDoForm
 from app.models import User, ToDO
 from flask_login import login_user, current_user, logout_user, login_required
 from flask_mail import Message
@@ -14,12 +14,10 @@ def home():
             if request.form.get('addTask') == 'Add Task':
                 return redirect(url_for('add_task'))
             elif request.form.get('sortTask') == 'Sort by date':
-                form2 = ManageToDoForm()
                 todos_ordered = ToDO.query.filter_by(author=current_user).order_by(ToDO.due_date.asc())
-                return render_template('home.html', todos=todos_ordered, form=form2)
-        form = ManageToDoForm()
+                return render_template('home.html', todos=todos_ordered)
         todos = ToDO.query.filter_by(author=current_user)
-        return render_template('home.html', todos=todos, form=form)
+        return render_template('home.html', todos=todos)
     return redirect(url_for('login'))
 
 
