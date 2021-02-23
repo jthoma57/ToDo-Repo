@@ -1,33 +1,25 @@
 from flask import render_template, url_for, flash, redirect, request
 from app import app, db, bcrypt, mail
-from app.forms import RegistrationForm, LoginForm, RequestResetForm, ResetPasswordForm, AddToDoForm
+from app.forms import RegistrationForm, LoginForm, RequestResetForm, ResetPasswordForm, AddToDoForm, ManageToDoForm
 from app.models import User, ToDO
 from flask_login import login_user, current_user, logout_user, login_required
 from flask_mail import Message
 
-todos = [
-    {
-        'task': 'clean dishes',
-        'due_date': 'April 20, 2018',
-        'complete': False
-    },
-    {
-        'task': 'finish HW',
-        'due_date': 'April 21, 2018',
-        'complete': True
-    }
-]
 
-
-@app.route("/")
-@app.route("/home")
+@app.route("/", methods=['GET', 'POST'])
+@app.route("/home", methods=['GET', 'POST'])
 def home():
     if current_user.is_authenticated:
         if request.method == 'POST':
-            if request.form['submit_button'] == 'Add Task':
-                form = AddToDoForm()
-                return render_template('add_task.html', title='Add Task', form=form)
-        return render_template('home.html', todos=todos)
+            if request.form.get('addTask') == 'Add Task':
+                return redirect(url_for('add_task'))
+            elif request.form.get('sortTask') == 'Sort by date':
+                form2 = ManageToDoForm()
+                todos_ordered = ToDO.query.filter_by(author=current_user).order_by(ToDO.due_date.asc())
+                return render_template('home.html', todos=todos_ordered, form=form2)
+        form = ManageToDoForm()
+        todos = ToDO.query.filter_by(author=current_user)
+        return render_template('home.html', todos=todos, form=form)
     return redirect(url_for('login'))
 
 
@@ -103,3 +95,51 @@ def reset_token(token):
         flash(f'Your password has been updated! You are now able to log in!', 'success')
         return redirect(url_for('login'))
     return render_template('reset_token.html', title='Reset Password', form=form)
+
+@app.route("/add_task", methods=['GET', 'POST'])
+@login_required
+def add_task():
+    form = AddToDoForm()
+    if form.validate_on_submit():
+        todo = ToDO(task=form.task.data, due_date=form.due_date.data, complete=False, author=current_user)
+        db.session.add(todo)
+        db.session.commit()
+        flash('Task Added!', 'success')
+        return redirect(url_for('home'))
+    return render_template('add_task.html', title='Add Task', form=form, legend='Add Task')
+
+@app.route("/edit_task/<int:todo_id>", methods=['GET', 'POST'])
+@login_required
+def edit_task(todo_id):
+    todo = ToDO.query.get_or_404(todo_id)
+    if todo.author != current_user:
+        abort(403)
+    form = AddToDoForm()
+    if form.validate_on_submit():
+        todo.task = form.task.data
+        todo.due_date = form.due_date.data
+        db.session.commit()
+        flash('Your task has been updated!', 'success')
+        return redirect(url_for('home'))
+    elif request.method == 'GET':
+        form.task.data = todo.task
+        form.due_date.data = todo.due_date
+    return render_template('add_task.html', title='Edit Task', form=form, legend='Edit Task')
+
+@app.route("/delete_task/<int:todo_id>", methods=['GET', 'POST'])
+@login_required
+def delete_task(todo_id):
+    todo = ToDO.query.get_or_404(todo_id)
+    if todo.author != current_user:
+        abort(403)
+    db.session.delete(todo)
+    db.session.commit()
+    flash('Your task has been deleted!', 'success')
+    return redirect(url_for('home'))
+
+@app.route('/toggle_status/<int:todo_id>')
+def toggle_status(todo_id):
+    todo = ToDO.query.get(todo_id)
+    todo.complete = not todo.complete
+    db.session.commit()
+    return redirect('/')

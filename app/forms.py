@@ -1,5 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, DateField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField
+from wtforms.fields.html5 import DateField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from app.models import User
 
@@ -47,5 +48,8 @@ class ResetPasswordForm(FlaskForm):
 
 class AddToDoForm(FlaskForm):
     task = StringField('Task', validators=[DataRequired()])
-    due_date = DateField('Due Date', format='%Y-%M-%D', validators=[DataRequired()])
+    due_date = DateField('Due Date', format='%Y-%m-%d', validators=[DataRequired()])
     submit = SubmitField('Add Task')
+
+class ManageToDoForm(FlaskForm):
+    completion = BooleanField('')
